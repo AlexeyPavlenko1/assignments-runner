@@ -1,47 +1,45 @@
 export function add(a, b) {
-  if (
-    (a === Number.NEGATIVE_INFINITY && b === Number.POSITIVE_INFINITY) ||
-    (b === Number.NEGATIVE_INFINITY && a === Number.POSITIVE_INFINITY)
-  ) {
-    return null;
-  }
-  if ((a === '' && b === 0) || (a === 0, b === '')) {
-    return null;
-  }
-  if ((typeof a === 'string' && Array.isArray(b)) || (typeof b === 'string' && Array.isArray(a))) {
-    return null;
-  }
-  if ((isNaN(a) && !isNaN(b)) || (isNaN(b) && !isNaN(a))) {
-    return null;
-  }
-  if (a === null && b === null) {
-    return null;
-  }
-  return a + b;
+  return validateAB(a, b) ? a + b : null;
 }
 
 export function subtract(a, b) {
-  if (Array.isArray(a) && typeof b === 'number') {
-    return null;
-  }
-  if (typeof a === 'number' && b === '') {
-    return null;
-  }
-  if (typeof a === 'number' && b === null) {
-    return null;
-  }
-  if (typeof a === 'number' && b === undefined) {
-    return null;
-  }
-  return a - b;
+  return validateAB(a, b) ? a - b : null;
 }
 
 export function complex([a, b], [c, d]) {
-  if (isNaN(a) || isNaN(b) || isNaN(c) || isNaN(d) || a === null || b === null || c === null || d === null || d === 0) {
+  if (d === 0 || hasSomeNullish(...arguments)) {
     return null;
   }
   const base = a * b;
   const exp = c / d;
-
   return Math.pow(base, exp);
+}
+
+function hasSomeNullish(...args) {
+  return args.flat().some(arg => arg === undefined || arg === null);
+}
+
+function validateAB(a, b) {
+  const nulls = a === null && b === null;
+  const numAndNan = (isNaN(a) && !isNaN(b)) || (isNaN(b) && !isNaN(a));
+  const ArrAndNum = Array.isArray(a) && typeof b === 'number';
+  const numAndNull = typeof a === 'number' && b === null;
+  const numAndUndefined = typeof a === 'number' && b === undefined;
+  const arrayAndString = (typeof a === 'string' && Array.isArray(b)) || (typeof b === 'string' && Array.isArray(a));
+  const numAndString =
+    (typeof a === 'number' && typeof b === 'string') || (typeof b === 'number' && typeof a === 'string');
+  const differentInfinities =
+    (a === Number.NEGATIVE_INFINITY && b === Number.POSITIVE_INFINITY) ||
+    (b === Number.NEGATIVE_INFINITY && a === Number.POSITIVE_INFINITY);
+
+  return [
+    nulls,
+    numAndNan,
+    ArrAndNum,
+    numAndString,
+    numAndNull,
+    numAndUndefined,
+    arrayAndString,
+    differentInfinities
+  ].every(x => x === false);
 }
