@@ -17,10 +17,8 @@ export const counter = (function () {
         break;
       case 'number':
         counterValue = inputValue;
-        counterName = typeof inputName === 'string' ? inputName : defaultName;
+        counterName = inputName ? inputName : defaultName;
         break;
-      default:
-        throw 'not supported argument';
     }
 
     if (typeof counters[counterName] !== 'undefined') {
@@ -35,17 +33,17 @@ export const counter = (function () {
 
 export function callableMultiplier(...args) {
   let total = null;
-  let multiplier = function multiplier(...args) {
-    if (args && args.length > 0) {
+  function multiplier(...args) {
+    if (args.length > 0) {
       if (!total) {
         total = 1;
       }
-      total *= args.reduce((x, y) => x * y);
+      total *= args.reduce((previous, current) => previous * current);
       return multiplier;
     } else {
       return total;
     }
-  };
+  }
   return multiplier(...args);
 }
 
@@ -59,19 +57,19 @@ export function createCalculator(initialValue) {
     log: [{ operation: 'init', value: value }],
     add(num) {
       value += num;
-      this.log.push({ operation: this.add.name, value: num });
+      this.log.push({ operation: 'add', value: num });
     },
     subtract(num) {
       value -= num;
-      this.log.push({ operation: this.subtract.name, value: num });
+      this.log.push({ operation: 'subtract', value: num });
     },
     multiply(num) {
       value *= num;
-      this.log.push({ operation: this.multiply.name, value: num });
+      this.log.push({ operation: 'multiply', value: num });
     },
     divide(num) {
       value /= num;
-      this.log.push({ operation: this.divide.name, value: num });
+      this.log.push({ operation: 'divide', value: num });
     }
   };
 }

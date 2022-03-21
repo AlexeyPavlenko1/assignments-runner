@@ -1,8 +1,8 @@
-export function mapTo(array, property = null) {
-  if (property === null) {
-    return array.map(x => array.indexOf(x));
+export function mapTo(array, property) {
+  if (!property) {
+    return array.map(num => array.indexOf(num));
   }
-  return array.filter(x => x.hasOwnProperty(property)).map(x => x[property]);
+  return array.filter(obj => obj[property]).map(obj => obj[property]);
 }
 
 export function mapToProfile(inputList) {
@@ -11,11 +11,11 @@ export function mapToProfile(inputList) {
       return this.age >= 60;
     },
     get isAnonymous() {
-      return this.name === null && this.surname === null;
+      return !this.name && !this.surname;
     }
   };
-  return [...inputList].map(obj => {
-    let newObj = Object.create(proto);
+  return inputList.map(obj => {
+    const newObj = Object.create(proto);
     newObj.name = obj.name ?? null;
     newObj.surname = obj.surname ?? null;
     newObj.fullname = newObj.isAnonymous ? null : `${newObj.name ?? '_'} ${newObj.surname ?? '_'}`;
@@ -37,75 +37,76 @@ export function filterBy(array, filter) {
   }
 }
 
-export function reduceTo(inputValues, props = undefined) {
+export function reduceTo(inputValues, props) {
   switch (typeof props) {
     case 'undefined':
-      return inputValues.reduce((x, y) => x + y);
+      return inputValues.reduce((prev, curr) => prev + curr);
     case 'string':
-      return inputValues.reduce((x, o2) => x + o2[props], 0);
+      return inputValues.reduce((prev, curr) => prev + curr[props], 0);
     case 'object':
-      let initial = [];
-      props.forEach(() => initial.push(0));
-      return inputValues.reduce((previous, o) => {
-        props.forEach(prop => (previous[props.indexOf(prop)] += o[prop]));
-        return previous;
-      }, initial);
+      return props.map(prop => inputValues.reduce((prev, curr) => prev + curr[prop], 0));
     default:
       return inputValues;
   }
 }
 
-export function sort(inputValues, props = undefined) {
+export function sort(inputValues, props) {
   switch (typeof props) {
     case 'undefined':
-      return inputValues.sort((a, b) => a - b);
+      return inputValues.sort((first, second) => first - second);
     case 'string':
-      return inputValues.sort((o1, o2) => o1[props] - o2[props]);
+      return inputValues.sort((first, second) => first[props] - second[props]);
     case 'object':
-      return inputValues.sort((o1, o2) => {
-        for (let i = 0; i < props.length; i++) {
-          switch (typeof props[i]) {
-            case 'string':
-              if (o1[props[i]] === o2[props[i]]) {
-                continue;
-              }
-              return o1[props[i]] - o2[props[i]];
-            case 'object':
-              let descOrder = props[i].order === 'desc';
-              if (o1[props[i].field] === o2[props[i].field]) {
-                continue;
-              }
-              return descOrder ? o2[props[i].field] - o1[props[i].field] : o1[props[i].field] - o2[props[i].field];
-            default:
-              return 0;
-          }
-        }
-      });
+      sortByObj(inputValues, props);
     default:
       return inputValues;
   }
+}
+
+function sortByObj(inputValues, props) {
+  return inputValues.sort((firstObj, secondObj) => {
+    let currentProp;
+    let ascResult;
+    for (let i = 0; i < props.length; i++) {
+      switch (typeof props[i]) {
+        case 'string':
+          currentProp = props[i];
+          ascResult = firstObj[currentProp] - secondObj[currentProp];
+          if (!ascResult) {
+            continue;
+          } else return ascResult;
+        case 'object':
+          currentProp = props[i].field;
+          ascResult = firstObj[currentProp] - secondObj[currentProp];
+          const isDescOrder = props[i].order === 'desc';
+          if (!ascResult) {
+            continue;
+          } else return isDescOrder ? -ascResult : ascResult;
+        default:
+          return 0;
+      }
+    }
+  });
 }
 
 export function complex(inputList, parameters) {
   for (const parameter of parameters) {
-    let operationName = parameter.operation;
-    let property = parameter.property;
+    const operationName = parameter.operation;
+    const property = parameter.property;
 
     switch (operationName) {
       case 'filter':
-        inputList = inputList.filter(o => parameter.callback(o[property]));
+        inputList = inputList.filter(obj => parameter.callback(obj[property]));
         break;
       case 'map':
-        inputList = inputList.map(o => o[property]);
+        inputList = inputList.map(obj => obj[property]);
         break;
       case 'reduce':
-        inputList = inputList.reduce((x, o2) => x + o2[property], 0);
+        inputList = inputList.reduce((prev, curr) => prev + curr[property], 0);
         break;
       case 'sort':
-        let desc = parameter.order === 'desc';
-        inputList.sort((a, b) => (desc ? b - a : a - b));
-        break;
-      default:
+        const desc = parameter.order === 'desc';
+        inputList.sort((first, second) => (desc ? second - first : first - second));
         break;
     }
   }

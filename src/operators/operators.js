@@ -7,7 +7,7 @@ export function subtract(a, b) {
 }
 
 export function complex([a, b], [c, d]) {
-  if (d === 0 || hasSomeNullish(...arguments)) {
+  if (d === 0 || hasSomeNullish(a, b, c, d)) {
     return null;
   }
   const base = a * b;
@@ -16,7 +16,7 @@ export function complex([a, b], [c, d]) {
 }
 
 function hasSomeNullish(...args) {
-  return args.flat().some(arg => arg === undefined || arg === null);
+  return args.some(arg => !arg);
 }
 
 function validateAB(a, b) {
@@ -32,7 +32,7 @@ function validateAB(a, b) {
     (a === Number.NEGATIVE_INFINITY && b === Number.POSITIVE_INFINITY) ||
     (b === Number.NEGATIVE_INFINITY && a === Number.POSITIVE_INFINITY);
 
-  return [
+  const invalidArgs = [
     nulls,
     numAndNan,
     ArrAndNum,
@@ -41,5 +41,7 @@ function validateAB(a, b) {
     numAndUndefined,
     arrayAndString,
     differentInfinities
-  ].every(x => x === false);
+  ];
+
+  return invalidArgs.every(invalidArg => !invalidArg);
 }
